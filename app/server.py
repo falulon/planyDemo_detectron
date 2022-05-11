@@ -98,7 +98,6 @@ async def analyze(request):
         return JSONResponse({'result': str('error')})
 
 
-asyncio.run(load_model(export_file_url, path / 'server' / export_file_name)) ## run 1st on server initialisation 
 
 ## serve the home page 
 @app.route('/')
@@ -116,6 +115,7 @@ if __name__ == '__main__':
         port = int(os.environ.get('PORT', 5000))
         uvicorn.run(app=app, host='0.0.0.0', port=port, log_level="info")
         
+asyncio.run(load_model(export_file_url, path / 'server' / export_file_name)) ## run 1st on server initialisation 
 
 
 
