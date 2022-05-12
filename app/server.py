@@ -4,14 +4,15 @@ from detectron2.utils.visualizer import Visualizer
 from detectron2 import model_zoo
 
 import asyncio
-import aiohttp
 import cv2
 import os
+import gdown
 import uvicorn
 import sys
 import numpy as np
 import base64
 
+#API
 from starlette.applications import Starlette
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse, JSONResponse
@@ -19,7 +20,7 @@ from starlette.staticfiles import StaticFiles
 from pathlib import Path
 
 
-export_file_url = "http://seethings.xyz/dl-course/model_final.pth"
+export_file_url = "http://seethings.xyz/dl-course/model_final.pth"  #Dima to proivde a link to gDrive 
 export_file_name = 'model_final.pth'
 is_model_configured = False
 
@@ -35,11 +36,7 @@ async def load_model(url, dest):
         print('download model SKIPPED. The model file exists at', dest)
     else:
         async def download_model():
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as response:
-                    data = await response.read()
-                    with open(dest, 'wb') as f:
-                        f.write(data)
+            gdown.download(url, dest, quiet=False)
         print("Downloading model for the first time, it may take a while...")
         await download_model()
         print("Download Complete. 100% ")
@@ -53,12 +50,11 @@ async def setup_detectron():
     # cfgFile = "./server/mask_rcnn_R_50_FPN_1x.yaml"
     # cfg.merge_from_file(cfgFile)
     cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_1x.yaml"))
-    # model_path = "./server/model_final.pth"  # use the trained model weights
     model_path = "./server/model_final.pth"  # use the trained model weights
    
     cfg.MODEL.DEVICE = "cpu"
     cfg.MODEL.WEIGHTS = model_path   
-    cfg.MODEL.ROI_HEADS.NUM_CLASSES = 6
+    cfg.MODEL.ROI_HEADS.NUM_CLASSES = 9
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.35
     global predictor
 
@@ -66,10 +62,7 @@ async def setup_detectron():
     global is_model_configured
     is_model_configured = True
     print("detectron model is configured")
-    # return predictor
-
-# predictor = setup_detectron()
-
+ 
     ## setup the visualizer. and produce the output image as a base64 to be sent back to client
 def analyze_image(im): 
     height, width, channels = im.shape
@@ -96,7 +89,6 @@ async def analyze(request):
    
     except: 
         return JSONResponse({'result': str('error')})
-
 
 
 ## serve the home page 
