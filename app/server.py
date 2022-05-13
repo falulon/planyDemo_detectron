@@ -1,6 +1,5 @@
 from importlib.metadata import metadata
 from detectron2.engine import DefaultPredictor
-from detectron2.data import MetadataCatalog
 from detectron2.config import get_cfg
 from detectron2.utils.visualizer import Visualizer
 from detectron2 import model_zoo
@@ -22,8 +21,7 @@ from starlette.staticfiles import StaticFiles
 from pathlib import Path
 
   
-  
-export_file_url = "https://drive.google.com/uc?id=1eymYxEE450VTMikB4VZLFgiMjgi2-3gN"  #Dima to proivde a link to Gdrive 
+export_file_url = "https://drive.google.com/uc?id=1eymYxEE450VTMikB4VZLFgiMjgi2-3gN"  #model link on Gdrive 
 export_file_name = 'model_final.pth'
 is_model_configured = False
 
@@ -45,11 +43,6 @@ async def load_model(url, dest):
         print("Download Complete. 100% ")
     await setup_detectron()
     
-# set up the class names to present    
-class metadata: 
-  def get(self, _):
-    return ["room a", "room b", "room c", "room d", "room e", "room f", "room g", "room h", "room i"]
-
 async def setup_detectron(): 
     # setup cfg model
     cfg = get_cfg() 
@@ -61,25 +54,43 @@ async def setup_detectron():
     cfg.MODEL.DEVICE = "cpu"
     cfg.MODEL.WEIGHTS = model_path   
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = 9
-    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.35
+    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.45
     global predictor
 
     predictor = DefaultPredictor(cfg)
     global is_model_configured
     is_model_configured = True
     print("detectron model is configured")
+
+# set up the class names to present    
+class Metadata:  
+    categories = [
+    { "id": 1, "name": "livingroom", "supercategory": "" },
+    { "id": 2, "name": "bedroom", "supercategory": "" },
+    { "id": 3, "name": "kitchen", "supercategory": "" },
+    { "id": 4, "name": "bathroom", "supercategory": "" },
+    { "id": 5, "name": "closet", "supercategory": "" },
+    { "id": 6, "name": "generic_room", "supercategory": "" },
+    { "id": 7, "name": "balcony_terrace", "supercategory": "" },
+    { "id": 8, "name": "diningroom", "supercategory": "" },
+    { "id": 9, "name": "foyer_hall", "supercategory": "" }
+    ]
+
+    def get(self, _):    
+        categories_list = map((lambda cat: cat['name'].replace('_',' ').capitalize()), Metadata.categories)
+        return list(categories_list)
  
     ## setup the visualizer. and produce the output image as a base64 to be sent back to client
 def analyze_image(im): 
-    height, width, channels = im.shape
     outputs = predictor(im)
-    v = Visualizer(im[:, :, ::-1] , metadata, scale=1)
-
+    v = Visualizer(im[:, :, ::-1] , Metadata, scale=1)
     v = v.draw_instance_predictions(outputs["instances"].to("cpu"))
     
+    pred_boxes = outputs['instances'].pred_boxes.tensor.tolist()
+    # pred_scores =outputs['instances'].scores.tolist()
     return_img = v.get_image()
     image_as_string = base64.b64encode(cv2.imencode('.jpg', return_img)[1]).decode()
-    return image_as_string
+    return image_as_string, pred_boxes
 
 # run detectron inference
 @app.route('/analyze', methods=['POST'])
@@ -89,8 +100,8 @@ async def analyze(request):
     img = cv2.imdecode( np.asarray(bytearray(img_bytes), dtype=np.uint8), 1 )
     
     try:
-        result = analyze_image(img)
-        return JSONResponse({'image_data': result})
+        result, pred_boxes = analyze_image(img)
+        return JSONResponse({'result': 'OK', 'image_data': result, 'xyxy': pred_boxes})
    
     except: 
         return JSONResponse({'result': str('error')})
