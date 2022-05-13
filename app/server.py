@@ -80,7 +80,7 @@ class Metadata:
         categories_list = map((lambda cat: cat['name'].replace('_',' ').capitalize()), Metadata.categories)
         return list(categories_list)
  
-    ## setup the visualizer. and produce the output image as a base64 to be sent back to client
+    ## setup the visualizer. and produce the output image as a base64 to be sent back to client and xyxy list of pred boxes
 def analyze_image(im): 
     outputs = predictor(im)
     v = Visualizer(im[:, :, ::-1] , Metadata, scale=1)
