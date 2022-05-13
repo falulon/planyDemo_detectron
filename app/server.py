@@ -1,4 +1,6 @@
+from importlib.metadata import metadata
 from detectron2.engine import DefaultPredictor
+from detectron2.data import MetadataCatalog
 from detectron2.config import get_cfg
 from detectron2.utils.visualizer import Visualizer
 from detectron2 import model_zoo
@@ -19,8 +21,9 @@ from starlette.responses import HTMLResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
 from pathlib import Path
 
-
-export_file_url = "http://seethings.xyz/dl-course/model_final.pth"  #Dima to proivde a link to gDrive 
+  
+  
+export_file_url = "https://drive.google.com/uc?id=1eymYxEE450VTMikB4VZLFgiMjgi2-3gN"  #Dima to proivde a link to Gdrive 
 export_file_name = 'model_final.pth'
 is_model_configured = False
 
@@ -36,22 +39,25 @@ async def load_model(url, dest):
         print('download model SKIPPED. The model file exists at', dest)
     else:
         async def download_model():
-            gdown.download(url, dest, quiet=False)
+            gdown.download(str(url), str(dest), quiet=False)
         print("Downloading model for the first time, it may take a while...")
         await download_model()
         print("Download Complete. 100% ")
     await setup_detectron()
     
-
+# set up the class names to present    
+class metadata: 
+  def get(self, _):
+    return ["room a", "room b", "room c", "room d", "room e", "room f", "room g", "room h", "room i"]
 
 async def setup_detectron(): 
     # setup cfg model
     cfg = get_cfg() 
-    # cfgFile = "./server/mask_rcnn_R_50_FPN_1x.yaml"
+    # cfgFile = "./server/mask_rcnn_R_101_FPN_3x.yaml"
     # cfg.merge_from_file(cfgFile)
-    cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_1x.yaml"))
+    cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_101_FPN_3x.yaml"))
     model_path = "./server/model_final.pth"  # use the trained model weights
-   
+    
     cfg.MODEL.DEVICE = "cpu"
     cfg.MODEL.WEIGHTS = model_path   
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = 9
@@ -67,8 +73,7 @@ async def setup_detectron():
 def analyze_image(im): 
     height, width, channels = im.shape
     outputs = predictor(im)
-    v = Visualizer(im[:, :, ::-1],
-                    scale=1)
+    v = Visualizer(im[:, :, ::-1] , metadata, scale=1)
 
     v = v.draw_instance_predictions(outputs["instances"].to("cpu"))
     
