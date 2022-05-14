@@ -20,7 +20,7 @@ from starlette.responses import HTMLResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
 from pathlib import Path
 
-  
+from model.categories import  categories
 export_file_url = "https://drive.google.com/uc?id=1eymYxEE450VTMikB4VZLFgiMjgi2-3gN"  #model link on Gdrive 
 export_file_name = 'model_final.pth'
 is_model_configured = False
@@ -46,10 +46,10 @@ async def load_model(url, dest):
 async def setup_detectron(): 
     # setup cfg model
     cfg = get_cfg() 
-    # cfgFile = "./server/mask_rcnn_R_101_FPN_3x.yaml"
+    # cfgFile = "./model/mask_rcnn_R_101_FPN_3x.yaml"
     # cfg.merge_from_file(cfgFile)
     cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_101_FPN_3x.yaml"))
-    model_path = "./server/model_final.pth"  # use the trained model weights
+    model_path = "./model/model_final.pth"  # use the trained model weights
     
     cfg.MODEL.DEVICE = "cpu"
     cfg.MODEL.WEIGHTS = model_path   
@@ -64,21 +64,10 @@ async def setup_detectron():
 
 # set up the class names to present    
 class Metadata:  
-    categories = [
-    { "id": 1, "name": "livingroom", "supercategory": "" },
-    { "id": 2, "name": "bedroom", "supercategory": "" },
-    { "id": 3, "name": "kitchen", "supercategory": "" },
-    { "id": 4, "name": "bathroom", "supercategory": "" },
-    { "id": 5, "name": "closet", "supercategory": "" },
-    { "id": 6, "name": "generic_room", "supercategory": "" },
-    { "id": 7, "name": "balcony_terrace", "supercategory": "" },
-    { "id": 8, "name": "diningroom", "supercategory": "" },
-    { "id": 9, "name": "foyer_hall", "supercategory": "" }
-    ]
-
     def get(self, _):    
-        categories_list = map((lambda cat: cat['name'].replace('_',' ').capitalize()), Metadata.categories)
-        return list(categories_list)
+        # categories_list = map((lambda cat: cat['name'].replace('_',' ').capitalize()), categories)
+        # return list(categories_list)
+        return categories
  
     ## setup the visualizer. and produce the output image as a base64 to be sent back to client and xyxy list of pred boxes
 def analyze_image(im): 
@@ -112,7 +101,7 @@ async def analyze(request):
 async def homepage(request):
     if not is_model_configured:
         print('Detectron model is not configured')
-        await load_model(export_file_url, path / 'server' / export_file_name) ##check if the model is loaded first
+        await load_model(export_file_url, path / 'model' / export_file_name) ##check if the model is loaded first
     html_file = path / 'view' / 'index.html'
     return HTMLResponse(html_file.open().read())
 
@@ -123,7 +112,7 @@ if __name__ == '__main__':
         port = int(os.environ.get('PORT', 5000))
         uvicorn.run(app=app, host='0.0.0.0', port=port, log_level="info")
         
-asyncio.run(load_model(export_file_url, path / 'server' / export_file_name)) ## run 1st on server initialisation 
+asyncio.run(load_model(export_file_url, path / 'model' / export_file_name)) ## run 1st on server initialisation 
 
 
 

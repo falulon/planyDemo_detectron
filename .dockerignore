@@ -1,5 +1,4 @@
 *.pth
 .gitignore
 Dockerfile
-Dockerfile - Copy
 README.md

@@ -1,4 +1,3 @@
-app/server/model_final.pth
-node_modules/
-Dockerfile - Copy
+app/model/model_final.pth
+
 
