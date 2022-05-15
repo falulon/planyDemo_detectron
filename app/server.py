@@ -21,7 +21,7 @@ from starlette.staticfiles import StaticFiles
 from pathlib import Path
 
 from model.categories import  categories
-export_file_url = "https://drive.google.com/uc?id=1eymYxEE450VTMikB4VZLFgiMjgi2-3gN"  #model link on Gdrive 
+export_file_url = "https://drive.google.com/uc?id=1m_EC6bQ1K90lt_D02JcgArU_sk7gwcDh"  #model link on Gdrive 
 export_file_name = 'model_final.pth'
 is_model_configured = False
 
@@ -65,8 +65,6 @@ async def setup_detectron():
 # set up the class names to present    
 class Metadata:  
     def get(self, _):    
-        # categories_list = map((lambda cat: cat['name'].replace('_',' ').capitalize()), categories)
-        # return list(categories_list)
         return categories
  
     ## setup the visualizer. and produce the output image as a base64 to be sent back to client and xyxy list of pred boxes
