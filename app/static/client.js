@@ -2,7 +2,13 @@
 // disable selection in DOM
 const disableselect = (e) => false;  
 document.onselectstart = disableselect;  
-
+document.onkeydown = (e) => {
+  let isEscKey = false;
+  if ("key" in e) { 
+    isEscKey = (e.key === "Escape" || e.key === "Esc");
+  } 
+  if (isEscKey) closeModal()
+}
 
 
 function dataURLtoBlob(dataurl) {
@@ -68,9 +74,12 @@ function imageHandler() {
   const content = document.querySelector('.content');
   const modal = el("result-modal")
   modal.showModal()
-  content.style.visibility = "hidden"
+  content.style.visibility = "hidden";
+  closeModal = ()=>{
+    modal.close(); content.style.visibility = "visible";
+  }
   modal.addEventListener('click', (event)=>{
-    if (event.target !== resultImage) {modal.close(); content.style.visibility = "visible"}});
+    if (event.target !== resultImage) {closeModal()}});
   }
 
   showModal()
